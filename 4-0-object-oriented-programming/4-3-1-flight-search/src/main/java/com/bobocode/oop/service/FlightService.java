@@ -1,8 +1,10 @@
 package com.bobocode.oop.service;
 
+import com.bobocode.oop.data.FlightDao;
 import com.bobocode.util.ExerciseNotCompletedException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * {@link FlightService} provides an API that allows to manage flight numbers
@@ -11,6 +13,11 @@ import java.util.List;
  * todo: 2. Using {@link com.bobocode.oop.data.FlightDao} implement method {@link FlightService#searchFlights(String)}
  */
 public class FlightService {
+    private FlightDataAccess flightDataAccess;
+
+    public FlightService(FlightDataAccess flightDataAccess) {
+        this.flightDataAccess = flightDataAccess;
+    }
 
     /**
      * Adds a new flight number
@@ -19,7 +26,7 @@ public class FlightService {
      * @return {@code true} if a flight number was added, {@code false} otherwise
      */
     public boolean registerFlight(String flightNumber) {
-        throw new ExerciseNotCompletedException();
+        return flightDataAccess.register(flightNumber);
     }
 
     /**
@@ -29,6 +36,8 @@ public class FlightService {
      * @return a list of found flight numbers
      */
     public List<String> searchFlights(String query) {
-        throw new ExerciseNotCompletedException();
+        return flightDataAccess.findAll().stream()
+                .filter(flightNumber -> flightNumber.contains(query))
+                .collect(Collectors.toList());
     }
 }
