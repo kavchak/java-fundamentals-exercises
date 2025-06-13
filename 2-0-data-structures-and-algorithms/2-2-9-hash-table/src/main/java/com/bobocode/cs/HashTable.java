@@ -27,6 +27,31 @@ import com.bobocode.util.ExerciseNotCompletedException;
  * @author Taras Boychuk
  */
 public class HashTable<K, V> implements Map<K, V> {
+    private static class Node<K, V> {
+        K key;
+        V value;
+        Node<K, V> next;
+
+        public Node(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
+
+    private Node<K, V>[] table;
+    private int size;
+    private static final int INITIAL_CAPACITY = 8;
+    private static final double LOAD_FACTOR = 0.75;
+
+    @SuppressWarnings("unchecked")
+    public HashTable(int capacity) {
+        verifyCapacity(capacity);
+        this.table = (Node<K, V>[]) new Node[capacity];
+    }
+
+    public HashTable() {
+        this(INITIAL_CAPACITY);
+    }
 
     /**
      * This method is a critical part of the hast table. The main idea is that having a key, you can calculate its index
@@ -43,7 +68,8 @@ public class HashTable<K, V> implements Map<K, V> {
      * @return array index of the given key
      */
     public static int calculateIndex(Object key, int tableCapacity) {
-        throw new ExerciseNotCompletedException(); // todo:
+        int hash = key.hashCode();
+        return Math.abs(hash) % tableCapacity;
     }
 
     /**
@@ -59,7 +85,28 @@ public class HashTable<K, V> implements Map<K, V> {
      */
     @Override
     public V put(K key, V value) {
-        throw new ExerciseNotCompletedException(); // todo:
+        int index = calculateIndex(key, table.length);
+        Node<K, V> current = table[index];
+
+        while (current != null) {
+            if (current.key.equals(key)) {
+                V oldValue = current.value;
+                current.value = value;
+                return oldValue;
+            }
+            current = current.next;
+        }
+
+        Node<K, V> newNode = new Node<>(key, value);
+        newNode.next = table[index];
+        table[index] = newNode;
+        size++;
+
+        if ((double) size / table.length >= LOAD_FACTOR) {
+            resizeTable(table.length * 2);
+        }
+
+        return null;
     }
 
     /**
@@ -71,7 +118,16 @@ public class HashTable<K, V> implements Map<K, V> {
      */
     @Override
     public V get(K key) {
-        throw new ExerciseNotCompletedException(); // todo:
+        int index = calculateIndex(key, table.length);
+        Node<K, V> current = table[index];
+
+        while (current != null) {
+            if (current.key.equals(key)) {
+                return current.value;
+            }
+            current = current.next;
+        }
+        return null;
     }
 
     /**
@@ -82,7 +138,7 @@ public class HashTable<K, V> implements Map<K, V> {
      */
     @Override
     public boolean containsKey(K key) {
-        throw new ExerciseNotCompletedException(); // todo:
+        return get(key) != null;
     }
 
     /**
@@ -93,7 +149,13 @@ public class HashTable<K, V> implements Map<K, V> {
      */
     @Override
     public boolean containsValue(V value) {
-        throw new ExerciseNotCompletedException(); // todo:
+        for (Node<K, V> node : table) {
+            while (node != null) {
+                if (node.value.equals(value)) return true;
+                node = node.next;
+            }
+        }
+        return false;
     }
 
     /**
@@ -103,7 +165,7 @@ public class HashTable<K, V> implements Map<K, V> {
      */
     @Override
     public int size() {
-        throw new ExerciseNotCompletedException(); // todo:
+        return size;
     }
 
     /**
@@ -113,7 +175,7 @@ public class HashTable<K, V> implements Map<K, V> {
      */
     @Override
     public boolean isEmpty() {
-        throw new ExerciseNotCompletedException(); // todo:
+        return size == 0;
     }
 
     /**
@@ -124,7 +186,24 @@ public class HashTable<K, V> implements Map<K, V> {
      */
     @Override
     public V remove(K key) {
-        throw new ExerciseNotCompletedException(); // todo:
+        int index = calculateIndex(key, table.length);
+        Node<K, V> current = table[index];
+        Node<K, V> prev = null;
+
+        while (current != null) {
+            if (current.key.equals(key)) {
+                if (prev == null) {
+                    table[index] = current.next;
+                } else {
+                    prev.next = current.next;
+                }
+                size--;
+                return current.value;
+            }
+            prev = current;
+            current = current.next;
+        }
+        return null;
     }
 
     /**
@@ -150,7 +229,20 @@ public class HashTable<K, V> implements Map<K, V> {
      */
     @Override
     public String toString() {
-        throw new ExerciseNotCompletedException(); // todo:
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < table.length; i++) {
+            sb.append(i).append(": ");
+            Node<K, V> current = table[i];
+            while (current != null) {
+                sb.append(current.key).append("=").append(current.value);
+                if (current.next != null) {
+                    sb.append(" -> ");
+                }
+                current = current.next;
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 
     /**
@@ -167,6 +259,26 @@ public class HashTable<K, V> implements Map<K, V> {
      * @param newCapacity a size of the new underlying array
      */
     public void resizeTable(int newCapacity) {
-        throw new ExerciseNotCompletedException(); // todo:
+        verifyCapacity(newCapacity);
+        Node<K, V>[] oldTable = table;
+
+        @SuppressWarnings("unchecked")
+        Node<K, V>[] newTable = new Node[newCapacity];
+
+        table = newTable;
+        size = 0;
+
+        for (Node<K, V> node : oldTable) {
+            while (node != null) {
+                put(node.key, node.value);
+                node = node.next;
+            }
+        }
+    }
+
+    private void verifyCapacity(int capacity) {
+        if (capacity <= 0) {
+            throw new IllegalArgumentException("Capacity (table array size) must be positive");
+        }
     }
 }
